@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Передышка</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="app" id="mainScreen">
+  <h1 class="visually-hidden">Передышка — таймер перерывов</h1>
+
+  <!-- Строка состояния терминала -->
+  <div class="sysline">
+    <span class="sys-id">ПЕРЕДЫШКА</span>
+    <span class="sys-state" id="phaseLabel">ОЖИДАНИЕ</span>
+  </div>
+
+  <section class="readout" id="ringWrap">
+    <div class="time" id="timeDisplay" role="timer" aria-live="off">25:00</div>
+    <!-- Сегментная шкала: заполняется блоками, а не плавной линией -->
+    <div class="bar" id="progressBar" aria-hidden="true"></div>
+    <svg class="bar-svg" viewBox="0 0 320 14" aria-hidden="true" hidden>
+      <g id="ticks"></g>
+      <line class="track" x1="0" y1="7" x2="320" y2="7"></line>
+      <line class="progress" id="progressCircle" x1="0" y1="7" x2="320" y2="7"
+            stroke-dasharray="320" stroke-dashoffset="320"></line>
+    </svg>
+  </section>
+
+  <div class="presets" id="presets">
+    <button class="preset" data-work="25" data-rest="5" aria-label="25 минут работы, 5 минут перерыва">25/05</button>
+    <button class="preset" data-work="50" data-rest="10" aria-label="50 минут работы, 10 минут перерыва">50/10</button>
+    <button class="preset" data-work="90" data-rest="15" aria-label="90 минут работы, 15 минут перерыва">90/15</button>
+  </div>
+
+  <div class="controls">
+    <div class="row">
+      <label id="workLabel">Работа</label>
+      <div class="stepper">
+        <button id="workMinus" aria-label="Уменьшить время работы">–</button>
+        <div class="val" id="workVal" aria-labelledby="workLabel">25</div>
+        <button id="workPlus" aria-label="Увеличить время работы">+</button>
+        <span class="unit">мин</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <label id="restLabel">Перерыв</label>
+      <div class="stepper">
+        <button id="restMinus" aria-label="Уменьшить время перерыва">–</button>
+        <div class="val" id="restVal" aria-labelledby="restLabel">05</div>
+        <button id="restPlus" aria-label="Увеличить время перерыва">+</button>
+        <span class="unit">мин</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <label for="volRange">Сигнал</label>
+      <div class="vol-group">
+        <button class="icon-btn on" id="muteBtn" aria-label="Выключить звук" aria-pressed="false">
+          <svg id="volIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+            <path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
+          </svg>
+        </button>
+        <input type="range" id="volRange" min="0" max="100" value="70"
+               aria-label="Громкость сигнала">
+      </div>
+    </div>
+
+    <div class="row">
+      <label>Автозапуск<em>стартует вместе с Windows</em></label>
+      <button class="switch" id="autoStart" role="switch" aria-checked="false"
+              aria-label="Запускать вместе с Windows"><span>ВЫКЛ</span></button>
+    </div>
+
+    <div class="row">
+      <label>Мягкий режим<em>без захвата экрана</em></label>
+      <button class="switch" id="softMode" role="switch" aria-checked="false"
+              aria-label="Мягкий режим"><span>ВЫКЛ</span></button>
+    </div>
+
+    <div class="row">
+      <label>Подсказки<em>строка под упражнением</em></label>
+      <button class="switch" id="tipsMode" role="switch" aria-checked="true"
+              aria-label="Дополнительные подсказки"><span>ВКЛ</span></button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" id="startBtn">Запустить</button>
+    <button class="btn" id="skipBtn" hidden>Перерыв</button>
+  </div>
+  <button class="link-btn" id="resetBtn" hidden>[ СБРОС ]</button>
+
+  <div class="stats">
+    <span><i>СДЕЛАНО</i><b id="statToday">00</b></span>
+    <span><i>ПРОПУЩ</i><b id="statSkipped">00</b></span>
+    <span><i>СЕРИЯ</i><b id="statStreak">00</b></span>
+  </div>
+
+  <!-- Показывается один раз, после первого выполненного перерыва -->
+  <aside class="offer" id="autoOffer" hidden>
+    <p class="offer-text">
+      Перерыв засчитан. Чтобы не запускать программу вручную каждое утро —
+      включить автозапуск вместе с Windows?
+    </p>
+    <div class="offer-actions">
+      <button class="btn" id="offerNo">Не нужно</button>
+      <button class="btn primary" id="offerYes">Включить</button>
+    </div>
+  </aside>
+
+  <p class="hint" id="hint">Крестик прячет окно в трей, программа продолжит работать</p>
+  <footer class="credits">
+    <span><small>Разработчик</small>Глеб Ягодкин</span>
+    <a id="supportLink" href="https://boosty.to/yagojeez/donate" target="_blank" rel="noopener noreferrer" aria-label="Поддержать Глеба Ягодкина на Boosty">Поддержать <span aria-hidden="true">↗</span></a>
+  </footer>
+  <p id="appStatus" class="app-status" role="status" hidden></p>
+</main>
+
+<!-- Предупреждение -->
+<aside class="warning" id="warning" role="alert" aria-live="assertive">
+  <div class="warning-text">
+    ПАУЗА ЧЕРЕЗ <b id="warningCountdown">30</b> СЕК
+  </div>
+  <div class="warning-actions">
+    <button class="btn" id="snoozeBtn">Отложить 5 мин</button>
+    <button class="btn primary" id="warnNowBtn">Начать</button>
+  </div>
+</aside>
+
+<!-- Полноэкранный перерыв -->
+<section class="overlay" id="overlay" role="dialog" aria-modal="true"
+         aria-labelledby="exerciseName" tabindex="-1" hidden>
+  <div class="overlay-frame">
+    <header class="ov-head">
+      <span class="ov-mark">ВРЕМЯ РАЗМЯТЬСЯ</span>
+      <div class="ov-timer"><span>ДО РАБОТЫ</span><span class="ov-clock" id="overlayTime" role="timer" aria-live="off">05:00</span></div>
+    </header>
+
+    <div class="ov-main">
+      <div class="ov-readout">
+        <span class="exercise-zone" id="stepLabel">ПРИГОТОВЬСЯ</span>
+        <div class="count" id="exerciseCount" aria-hidden="true"></div>
+        <p id="stepStatus" role="status" aria-live="polite"></p>
+      </div>
+      <div class="ov-body">
+        <span class="exercise-zone" id="exerciseZone">НОГИ</span>
+        <h2 class="exercise-name" id="exerciseName">Короткая разминка</h2>
+        <p class="exercise-space" id="exerciseSpace"></p>
+        <ol class="exercise-steps" id="exerciseSteps"></ol>
+        <p class="exercise-detail" id="exerciseDetail"></p>
+        <p class="exercise-tip" id="exerciseTip" hidden></p>
+      </div>
+    </div>
+
+    <footer class="ov-foot">
+      <div class="ov-meta">
+        <span class="exercise-time" id="exerciseTime"></span>
+        <span class="overlay-breath" id="overlayBreath"></span>
+      </div>
+      <div class="overlay-actions">
+        <button class="overlay-btn done" id="doneBtn">Выполнено</button>
+        <button class="overlay-btn" id="otherBtn">Заменить</button>
+        <button class="overlay-btn quiet" id="dismissBreakBtn">Пропустить</button>
+      </div>
+      <div class="overlay-esc">ESC — ПРОПУСТИТЬ · МОЖНО ЗАКОНЧИТЬ РАНЬШЕ, ЕСЛИ УЖЕ РАЗМЯЛСЯ</div>
+    </footer>
+  </div>
+</section>
+
+<script src="exercises.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
